@@ -244,6 +244,51 @@ void SoftwareRendererImp::rasterize_line( float x0, float y0,
 
   // Task 2: 
   // Implement line rasterization
+    float delta_y = y1 - y0;
+    float delta_x = x1 - x0;
+    if (delta_x == 0) {
+        if (delta_y > 0) {
+            for (int i = y0; i <= y1; i++) {
+                rasterize_point(x0, i, color);
+            }
+        }
+        else {
+            for (int i = y0; i >= y1; i--) {
+                rasterize_point(x0, i, color);
+            }
+        }
+
+    }
+    else {
+        float k = delta_y / delta_x;
+        if (abs(k) > 1) {
+            if (y1 > y0) {
+                for (int i = 0; i <= y1 - y0; ++i) {
+                    rasterize_point((i/k) + x0, i  + y0, color);
+                }
+            }
+            else {
+                for (int i = 0; i >= y1 - y0; --i) {
+                    rasterize_point((i/k) + x0, i  + y0, color);
+                }
+            }
+        }
+        else {
+            if (x1 > x0) {
+                for (int i = 0; i <= x1 - x0; ++i) {
+                    rasterize_point(i + x0, i*k + y0, color);
+                }
+            }
+            else {
+                for (int i = 0; i >= x1 - x0; --i) {
+                    rasterize_point(i + x0, i*k + y0, color);
+                }
+            }
+        }
+
+
+    }
+
 }
 
 void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
