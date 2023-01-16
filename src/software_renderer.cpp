@@ -252,7 +252,9 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
                                               Color color ) {
   // Task 3: 
   // Implement triangle rasterization
-
+    rasterize_line(x0, y0, x1, y1, color);
+    rasterize_line(x1, y1, x2, y2, color);
+    rasterize_line(x2, y2, x0, y0, color);
 }
 
 void SoftwareRendererImp::rasterize_image( float x0, float y0,
