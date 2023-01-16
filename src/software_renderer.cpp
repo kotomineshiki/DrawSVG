@@ -244,6 +244,10 @@ void SoftwareRendererImp::rasterize_line( float x0, float y0,
 
   // Task 2: 
   // Implement line rasterization
+    x0 = (int)floor(x0);
+    y0 = (int)floor(y0);
+    x1 = (int)floor(x1);
+    y1 = (int)floor(y1);
     float delta_y = y1 - y0;
     float delta_x = x1 - x0;
     if (delta_x == 0) {
