@@ -301,9 +301,50 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
                                               Color color ) {
   // Task 3: 
   // Implement triangle rasterization
-    rasterize_line(x0, y0, x1, y1, color);
-    rasterize_line(x1, y1, x2, y2, color);
-    rasterize_line(x2, y2, x0, y0, color);
+   // rasterize_line(x0, y0, x1, y1, color);
+   // rasterize_line(x1, y1, x2, y2, color);
+   // rasterize_line(x2, y2, x0, y0, color);
+    Vector2D vector0(x0, y0);
+    Vector2D vector1(x1, y1);
+    Vector2D vector2(x2, y2);
+    Vector2D line01 = vector1 - vector0;
+    Vector2D line12 = vector2 - vector1;
+    Vector2D line20 = vector0 - vector2;
+    //dot(line01, line12);
+    
+    //1 step: get the bounding box
+    float xmin = min(x0,min( x1, x2));
+    float ymin = min(y0, min(y1, y2));
+    float xmax = max(x0,max( x1, x2));
+    float ymax = max(y0, max(y1, y2));
+    int xmin_int = floor(xmin);
+    int ymin_int = floor(ymin);
+    int xmax_int = ceil(xmax);
+    int ymax_int = ceil(ymax);
+    
+    for (int i = xmin_int; i <= xmax_int; ++i) {//Todo:take a floor
+        for (int j = ymin_int; j <= ymax_int; ++j) {
+            Vector2D toCheckPoint(i, j);
+            Vector2D line0C = toCheckPoint - vector0;
+            Vector2D line1C = toCheckPoint - vector1;
+            Vector2D line2C = toCheckPoint - vector2;
+            double result0 = cross(line01,line0C);
+            double result1 = cross(line12,line1C);
+            double result2 = cross(line20,line2C);
+
+        /*    if (result0 * result0x >= 0 && result1 * result1x >= 0 && result2 * result2x >= 0) {
+                rasterize_point(i, j, color);
+            }
+*/
+            if ((result0 > 0 && result1 > 0 && result2 > 0)) {
+                rasterize_point(i, j, color);
+            }
+
+        }
+    }
+     rasterize_line(x0, y0, x1, y1, color);
+     rasterize_line(x1, y1, x2, y2, color);
+     rasterize_line(x2, y2, x0, y0, color);
 }
 
 void SoftwareRendererImp::rasterize_image( float x0, float y0,
