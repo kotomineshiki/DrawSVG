@@ -45,7 +45,23 @@ void SoftwareRendererImp::set_sample_rate( size_t sample_rate ) {
   // Task 4: 
   // You may want to modify this for supersampling support
   this->sample_rate = sample_rate;
-
+  /*switch (sample_rate) {
+  case 1:
+      this->sample_rate = 1;
+      break;
+  case 2:
+      this->sample_rate = 4;
+      break;
+  case 3:
+      this->sample_rate = 9;
+      break;
+  case 4:
+      this->sample_rate = 16;
+      break;
+  }*/
+  int newSize = sample_rate * sample_rate;// *target_w* target_h;
+  sample_buffer.resize(newSize);
+  cout << sample_buffer.size();
 }
 
 void SoftwareRendererImp::set_render_target( unsigned char* render_target,
@@ -240,17 +256,7 @@ void SoftwareRendererImp::rasterize_point( float x, float y, Color color ) {
 void SoftwareRendererImp::rasterize_line(float x0, float y0,
     float x1, float y1,
     Color color) {
-    /*  vector<Vector2D> points = bresenham(x0, y0, x1, y1);
-      for (int i = 0; i < points.size(); ++i) {
-          rasterize_point(points[i].x, points[i].y, color);
-      }
-      */
-      // Task 2: 
-      // Implement line rasterization
-   // x0 = (int)floor(x0);
-   // y0 = (int)floor(y0);
-   // x1 = (int)floor(x1);
-   // y1 = (int)floor(y1);
+
     float delta_y = y1 - y0;
     float delta_x = x1 - x0;
     if (delta_x == 0) {
@@ -334,16 +340,12 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
             double result0 = cross(line01,line0C);
             double result1 = cross(line12,line1C);
             double result2 = cross(line20,line2C);
-            if ((result0 > 0 && result1 > 0 && result2 > 0)) {
+            if ((result0 >= 0 && result1 >= 0 && result2 >= 0)) {
                 rasterize_point(i, j, color);
             }
 
         }
     }
-
- //    rasterize_line(x0, y0, x1, y1, color);
- //    rasterize_line(x1, y1, x2, y2, color);
- //    rasterize_line(x2, y2, x0, y0, color);
 }
 
 void SoftwareRendererImp::rasterize_image( float x0, float y0,
@@ -360,6 +362,9 @@ void SoftwareRendererImp::resolve( void ) {
   // Task 4: 
   // Implement supersampling
   // You may also need to modify other functions marked with "Task 4".
+    //make 
+
+
   return;
 
 }

@@ -132,7 +132,8 @@ class SoftwareRendererImp : public SoftwareRenderer {
 
   // resolve samples to render target
   void resolve( void );
-
+  std::vector<unsigned char> sample_buffer;
+  std::vector<float> sample_selection_map;
 }; // class SoftwareRendererImp
 
 
