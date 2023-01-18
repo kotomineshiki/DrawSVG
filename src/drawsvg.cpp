@@ -419,6 +419,7 @@ void DrawSVG::inc_sample_rate() {
     sample_rate += sample_rate < 4 ? 1 : 0;
     software_renderer_imp->set_sample_rate(sample_rate);
     software_renderer_ref->set_sample_rate(sample_rate);
+ //   cout << "NP-1" << endl;
     redraw();
   }
 }
@@ -434,15 +435,16 @@ void DrawSVG::dec_sample_rate() {
 
 void DrawSVG::redraw() {
 
+ //   cout << "NP-0" << endl;
   clear();
-
+ // cout << "NP0" << endl;
   // set svg_2_screen transformation
   Matrix3x3 m_imp = norm_to_screen * viewport_imp[current_tab]->get_svg_2_norm();
   Matrix3x3 m_ref = norm_to_screen * viewport_ref[current_tab]->get_svg_2_norm();
   software_renderer_imp->set_svg_2_screen( m_imp ); 
   software_renderer_ref->set_svg_2_screen( m_ref ); 
   hardware_renderer->set_svg_2_screen( m_ref );
-
+ // cout << "NP" << endl;
   switch (method) {
 
     case Hardware:  
@@ -452,7 +454,9 @@ void DrawSVG::redraw() {
     case Software: 
 
       if (show_diff) { draw_diff(); return; }
+   //   cout << "NP1" << endl;
       software_renderer->draw_svg(*tabs[current_tab]);
+   //   cout << "NP2" << endl;
       display_pixels( &framebuffer[0] );
       break;
 

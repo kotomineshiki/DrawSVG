@@ -45,23 +45,11 @@ void SoftwareRendererImp::set_sample_rate( size_t sample_rate ) {
   // Task 4: 
   // You may want to modify this for supersampling support
   this->sample_rate = sample_rate;
-  /*switch (sample_rate) {
-  case 1:
-      this->sample_rate = 1;
-      break;
-  case 2:
-      this->sample_rate = 4;
-      break;
-  case 3:
-      this->sample_rate = 9;
-      break;
-  case 4:
-      this->sample_rate = 16;
-      break;
-  }*/
-  int newSize = sample_rate * sample_rate;// *target_w* target_h;
+  int newSize = sample_rate * sample_rate * target_w * target_h * 4;
   sample_buffer.resize(newSize);
-  cout << sample_buffer.size();
+  w = sample_rate * target_w;
+  h = sample_rate * target_h;
+  sample_buffer.assign(newSize, 255);
 }
 
 void SoftwareRendererImp::set_render_target( unsigned char* render_target,
@@ -72,13 +60,18 @@ void SoftwareRendererImp::set_render_target( unsigned char* render_target,
   this->render_target = render_target;
   this->target_w = width;
   this->target_h = height;
-
+  int newSize = sample_rate * sample_rate * target_w * target_h * 4;
+  sample_buffer.resize(newSize);
+  w = sample_rate * width;
+  h = sample_rate * height;
+  sample_buffer.assign(newSize, 255);
 }
 
 void SoftwareRendererImp::draw_element( SVGElement* element ) {
 
   // Task 5 (part 1):
   // Modify this to implement the transformation stack
+
 
   switch(element->type) {
     case POINT:
@@ -117,6 +110,7 @@ void SoftwareRendererImp::draw_element( SVGElement* element ) {
 void SoftwareRendererImp::draw_point( Point& point ) {
 
   Vector2D p = transform(point.position);
+  //cout << p.x << "SSS" << point.position.x << endl;
   rasterize_point( p.x, p.y, point.style.fillColor );
 
 }
@@ -236,26 +230,30 @@ void SoftwareRendererImp::draw_group( Group& group ) {
 // The input arguments in the rasterization functions 
 // below are all defined in screen space coordinates
 
-void SoftwareRendererImp::rasterize_point( float x, float y, Color color ) {
-
+void SoftwareRendererImp::rasterize_point(float x, float y, Color color) {
+    //xy is the screen-space location of a point
   // fill in the nearest pixel
-  int sx = (int) floor(x);
-  int sy = (int) floor(y);
+    int sx = (int)floor(x);
+    int sy = (int)floor(y);
 
-  // check bounds
-  if ( sx < 0 || sx >= target_w ) return;
-  if ( sy < 0 || sy >= target_h ) return;
+    // check bounds
+    if (sx < 0 || sx >= sample_rate * target_w) return;
+    if (sy < 0 || sy >= sample_rate * target_h) return;
 
-  // fill sample - NOT doing alpha blending!
-  render_target[4 * (sx + sy * target_w)    ] = (uint8_t) (color.r * 255);
-  render_target[4 * (sx + sy * target_w) + 1] = (uint8_t) (color.g * 255);
-  render_target[4 * (sx + sy * target_w) + 2] = (uint8_t) (color.b * 255);
-  render_target[4 * (sx + sy * target_w) + 3] = (uint8_t) (color.a * 255);
+    // fill sample - NOT doing alpha blending!
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w)] = (uint8_t)(color.r * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 1] = (uint8_t)(color.g * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 2] = (uint8_t)(color.b * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 3] = (uint8_t)(color.a * 255);
 
 }
 void SoftwareRendererImp::rasterize_line(float x0, float y0,
     float x1, float y1,
     Color color) {
+    x0 *= sample_rate;
+    y0 *= sample_rate;
+    x1 *= sample_rate;
+    y1 *= sample_rate;
 
     float delta_y = y1 - y0;
     float delta_x = x1 - x0;
@@ -310,9 +308,13 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
                                               Color color ) {
   // Task 3: 
   // Implement triangle rasterization
-   // rasterize_line(x0, y0, x1, y1, color);
-   // rasterize_line(x1, y1, x2, y2, color);
-   // rasterize_line(x2, y2, x0, y0, color);
+    x0 *= sample_rate;
+    y0 *= sample_rate;
+    x1 *= sample_rate;
+    y1 *= sample_rate;
+    x2 *= sample_rate;
+    y2 *= sample_rate;
+
     Vector2D vector0(x0, y0);
     Vector2D vector1(x1, y1);
     Vector2D vector2(x2, y2);
@@ -356,17 +358,42 @@ void SoftwareRendererImp::rasterize_image( float x0, float y0,
 
 }
 
+Color SoftwareRendererImp::cast_sample_on_pixel(int sx, int sy) {
+    //input original Position in Pixel,get the sampled color of that pixel position
+    int sample_position_x = sx * sample_rate;
+    int sample_position_y = sy * sample_rate;
+    
+    Color resultColor;
+    float divide = (float) 1 / (sample_rate * sample_rate);
+    for (int x = sample_position_x;x < sample_position_x + sample_rate;++x) {
+        for (int y = sample_position_y;y < sample_position_y + sample_rate;++y) {
+            resultColor.r += divide * (sample_buffer)[4 * (x + y * sample_rate * target_w) + 0] / 255;
+            resultColor.g += divide * (sample_buffer)[4 * (x + y * sample_rate * target_w) + 1] / 255;
+            resultColor.b += divide * (sample_buffer)[4 * (x + y * sample_rate * target_w) + 2] / 255;
+            resultColor.a += divide * (sample_buffer)[4 * (x + y * sample_rate * target_w) + 3] / 255;
+        }
+    }
+   // cout << resultColor.r << endl;
+    return resultColor;
+    //sample_rate
+}
 // resolve samples to render target
 void SoftwareRendererImp::resolve( void ) {
 
   // Task 4: 
   // Implement supersampling
   // You may also need to modify other functions marked with "Task 4".
-    //make 
-
-
-  return;
-
+  //  cout << target_w << " " << target_h;
+    for (int sx = 0;sx < target_w;++sx) {
+        for (int sy = 0;sy < target_h;++sy) {
+            Color color = cast_sample_on_pixel(sx, sy);
+            render_target[4 * (sx + sy * target_w) + 0] = (uint8_t)(color.r * 255);
+            render_target[4 * (sx + sy * target_w) + 1] = (uint8_t)(color.g * 255);
+            render_target[4 * (sx + sy * target_w) + 2] = (uint8_t)(color.b * 255);
+            render_target[4 * (sx + sy * target_w) + 3] = (uint8_t)(color.a * 255);
+        }
+    }
+    sample_buffer.assign(sample_buffer.size(), 255);
 }
 
 

@@ -31,6 +31,7 @@ class SoftwareRenderer : public SVGRenderer {
   // Clear render target
   inline void clear_target() {
     memset(render_target, 255, 4 * target_w * target_h);
+
   }
 
   // Set texture sampler
@@ -79,7 +80,10 @@ class SoftwareRendererImp : public SoftwareRenderer {
                           size_t width, size_t height );
 
  private:
-
+     Color cast_sample_on_pixel(int sx, int sy);
+     std::vector<unsigned char> sample_buffer;int w;int h;
+     void fill_sample(int sx, int sy, const Color& c);
+     void fill_pixel(int x, int y, const Color& c);
   // Primitive Drawing //
 
   // Draws an SVG element
@@ -132,8 +136,7 @@ class SoftwareRendererImp : public SoftwareRenderer {
 
   // resolve samples to render target
   void resolve( void );
-  std::vector<unsigned char> sample_buffer;
-  std::vector<float> sample_selection_map;
+
 }; // class SoftwareRendererImp
 
 
@@ -209,7 +212,7 @@ class SoftwareRendererRef : public SoftwareRenderer {
 
   // Helpers //
   // HINT: you may want to have something similar //
-  std::vector<unsigned char> sample_buffer; int w; int h;
+  std::vector<unsigned char> sample_buffer;int w;int h;
   void fill_sample( int sx, int sy, const Color& c );
   void fill_pixel( int x, int y, const Color& c );
 
