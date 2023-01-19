@@ -18,7 +18,7 @@ void SoftwareRendererImp::draw_svg( SVG& svg ) {
 
   // set top level transformation
   transformation = svg_2_screen;
-
+  //svg.elements[0]->transform
   // draw all elements
   for ( size_t i = 0; i < svg.elements.size(); ++i ) {
     draw_element(svg.elements[i]);
