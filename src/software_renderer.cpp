@@ -233,19 +233,71 @@ void SoftwareRendererImp::draw_group( Group& group ) {
 void SoftwareRendererImp::rasterize_point(float x, float y, Color color) {
     //xy is the screen-space location of a point
   // fill in the nearest pixel
-    int sx = (int)floor(x);
-    int sy = (int)floor(y);
+    int sx = (int)floor(x)*sample_rate;
+    int sy = (int)floor(y)*sample_rate;
 
     // check bounds
     if (sx < 0 || sx >= sample_rate * target_w) return;
     if (sy < 0 || sy >= sample_rate * target_h) return;
 
     // fill sample - NOT doing alpha blending!
-    (sample_buffer)[4 * (sx + sy * sample_rate * target_w)] = (uint8_t)(color.r * 255);
-    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 1] = (uint8_t)(color.g * 255);
-    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 2] = (uint8_t)(color.b * 255);
-    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 3] = (uint8_t)(color.a * 255);
+    Color newcolor;
+   // newcolor = color * sample_rate * sample_rate;
+    //newcolor.a = 1;
+    for (int i = sx;i < sx + sample_rate;++i) {
+        for (int j = sy;j < sy + sample_rate;++j) {
+            fill_sample(i, j,color);
+        }
+    }
+    //fill_sample(sx, sy, newcolor);
 
+}
+void SoftwareRendererImp::rasterize_line_helper(float x0, float y0,
+    float x1, float y1,
+    Color color) {
+    float delta_y = y1 - y0;
+    float delta_x = x1 - x0;
+    if (delta_x == 0) {
+        if (delta_y > 0) {
+            for (int i = y0; i <= y1; i++) {
+                fill_sample(x0, i, color);
+            }
+        }
+        else {
+            for (int i = y0; i >= y1; i--) {
+                fill_sample(x0, i, color);
+            }
+        }
+        return;
+    }
+
+    float k = delta_y / delta_x;
+    if (abs(delta_y) > abs(delta_x)) {
+        if (y1 > y0) {
+            for (int i = 0; i <= y1 - y0; ++i) {
+                fill_sample(round(i / k + x0), i + y0, color);
+            }
+        }
+        else {
+            for (int i = 0; i >= y1 - y0; --i) {
+                fill_sample(round(i / k + x0), i + y0, color);
+            }
+        }
+    }
+    else {
+        if (x1 > x0) {
+            for (int i = 0; i <= x1 - x0; ++i) {
+                fill_sample(i + x0, round(i * k + y0), color);
+            }
+        }
+        else {
+            for (int i = 0; i >= x1 - x0; --i) {
+                fill_sample(i + x0, round(i * k + y0), color);
+            }
+        }
+
+
+    }
 }
 void SoftwareRendererImp::rasterize_line(float x0, float y0,
     float x1, float y1,
@@ -254,50 +306,10 @@ void SoftwareRendererImp::rasterize_line(float x0, float y0,
     y0 *= sample_rate;
     x1 *= sample_rate;
     y1 *= sample_rate;
-
-    float delta_y = y1 - y0;
-    float delta_x = x1 - x0;
-    if (delta_x == 0) {
-        if (delta_y > 0) {
-            for (int i = y0; i <= y1; i++) {
-                rasterize_point(x0, i, color);
-            }
-        }
-        else {
-            for (int i = y0; i >= y1; i--) {
-                rasterize_point(x0, i, color);
-            }
-        }
-        return;
+    for (int i = 0;i < sample_rate;i++) {
+        rasterize_line_helper(x0 + i, y0 + i,x1+i,y1+i, color);
     }
-
-    float k = delta_y / delta_x;
-    if (abs(delta_y) > abs(delta_x) ){
-        if (y1 > y0) {
-            for (int i = 0; i <= y1 - y0; ++i) {
-                rasterize_point(round(i / k + x0), i + y0, color);
-            }
-        }
-        else {
-            for (int i = 0; i >= y1 - y0; --i) {
-                rasterize_point(round(i / k + x0), i + y0, color);
-            }
-        }
-    }
-    else {
-        if (x1 > x0) {
-            for (int i = 0; i <= x1 - x0; ++i) {
-                rasterize_point(i + x0, round(i * k + y0), color);
-            }
-        }
-        else {
-            for (int i = 0; i >= x1 - x0; --i) {
-                rasterize_point(i + x0, round(i * k + y0), color);
-            }
-        }
-
-
-    }
+    
 
 
 }
@@ -343,7 +355,7 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
             double result1 = cross(line12,line1C);
             double result2 = cross(line20,line2C);
             if ((result0 >= 0 && result1 >= 0 && result2 >= 0)) {
-                rasterize_point(i, j, color);
+                fill_sample(i, j, color);
             }
 
         }
@@ -377,6 +389,27 @@ Color SoftwareRendererImp::cast_sample_on_pixel(int sx, int sy) {
     return resultColor;
     //sample_rate
 }
+void SoftwareRendererImp::fill_sample(int sx, int sy, const Color& color) {
+    //int sx = (int)floor(x);
+    //int sy = (int)floor(y);
+
+    // check bounds
+    if (sx < 0 || sx >= sample_rate * target_w) return;
+    if (sy < 0 || sy >= sample_rate * target_h) return;
+
+    // fill sample - NOT doing alpha blending!
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w)] = (uint8_t)(color.r * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 1] = (uint8_t)(color.g * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 2] = (uint8_t)(color.b * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 3] = (uint8_t)(color.a * 255);
+}
+void SoftwareRendererImp::fill_pixel(int x, int y, const Color& color) {
+    render_target[4 * (x + y * target_w) + 0] = (uint8_t)(color.r * 255);
+    render_target[4 * (x + y * target_w) + 1] = (uint8_t)(color.g * 255);
+    render_target[4 * (x + y * target_w) + 2] = (uint8_t)(color.b * 255);
+    render_target[4 * (x + y * target_w) + 3] = (uint8_t)(color.a * 255);
+}
+
 // resolve samples to render target
 void SoftwareRendererImp::resolve( void ) {
 
@@ -387,10 +420,7 @@ void SoftwareRendererImp::resolve( void ) {
     for (int sx = 0;sx < target_w;++sx) {
         for (int sy = 0;sy < target_h;++sy) {
             Color color = cast_sample_on_pixel(sx, sy);
-            render_target[4 * (sx + sy * target_w) + 0] = (uint8_t)(color.r * 255);
-            render_target[4 * (sx + sy * target_w) + 1] = (uint8_t)(color.g * 255);
-            render_target[4 * (sx + sy * target_w) + 2] = (uint8_t)(color.b * 255);
-            render_target[4 * (sx + sy * target_w) + 3] = (uint8_t)(color.a * 255);
+            fill_pixel(sx, sy, color);
         }
     }
     sample_buffer.assign(sample_buffer.size(), 255);
