@@ -7,6 +7,7 @@
 #include "CMU462.h"
 #include "texture.h"
 #include "svg_renderer.h"
+#include <stack>
 
 namespace CMU462 { // CMU462
 
@@ -80,12 +81,15 @@ class SoftwareRendererImp : public SoftwareRenderer {
                           size_t width, size_t height );
 
  private:
+     std::stack<Matrix3x3> transforms;
      Color cast_sample_on_pixel(int sx, int sy);
      std::vector<unsigned char> sample_buffer;int w;int h;
      void fill_sample(int sx, int sy, const Color& c);
      void fill_pixel(int x, int y, const Color& c);
   // Primitive Drawing //
-
+     inline Vector2D transformRelatively(const Vector2D& p) {
+         return transform(transforms.top(), p);
+     }
   // Draws an SVG element
   void draw_element( SVGElement* element );
 

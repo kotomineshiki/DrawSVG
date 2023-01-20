@@ -45,7 +45,14 @@ class SVGRenderer {
     // project back to 2D Euclidean plane
     return Vector2D(u.x / u.z, u.y / u.z);
   }
-
+  static inline Vector2D transform(const Matrix3x3& t, const Vector2D& p) {
+      // map point from 2D Euclidean plane to 3D projective space
+      Vector3D u(p.x, p.y, 1.0);
+      // apply projective space transformation
+      u = t * u;
+      // project back to 2D Euclidean plane
+      return { u.x / u.z, u.y / u.z };
+  }
 };
 
 } // namespace CMU462
