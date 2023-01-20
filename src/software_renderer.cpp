@@ -358,7 +358,7 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
             double result0 = cross(line01,line0C);
             double result1 = cross(line12,line1C);
             double result2 = cross(line20,line2C);
-            if ((result0 >= 0 && result1 >= 0 && result2 >= 0)||(result0<=0&&result1<=0&&result2<=0)) {
+            if ((result0 >= 0 && result1 >= 0 && result2 >= 0)||(result0<=0&&result1<=0&&result2<=0)) {//careful about the clockwise
                 fill_sample(i, j, color);
             }
 
