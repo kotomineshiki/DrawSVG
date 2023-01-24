@@ -13,6 +13,8 @@ void ViewportImp::set_viewbox( float centerX, float centerY, float vspan ) {
   this->centerX = centerX;
   this->centerY = centerY;
   this->vspan = vspan; 
+  //vspan = centerY;
+ // cout << vspan;
   Matrix3x3 svg2norm;
   svg2norm(0, 0) = 0.5 / vspan ;
   svg2norm(0, 1) = 0;

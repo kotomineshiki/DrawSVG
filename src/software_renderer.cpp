@@ -371,6 +371,29 @@ void SoftwareRendererImp::rasterize_image( float x0, float y0,
                                            Texture& tex ) {
   // Task 6: 
   // Implement image rasterization
+    x0 *= sample_rate;
+    y0 *= sample_rate;
+    x1 *= sample_rate;
+    y1 *= sample_rate;
+
+    float u, v;
+    float u_scale = (x1 - x0) / tex.width;
+    float v_scale = (y1 - y0) / tex.height;
+    cout << x0 << " " << y0 <<" " << x1 << " " << y1 << endl;
+    int sx_min = round(x0);
+    int sy_min = round(y0);
+    int sx_max = round(x1);
+    int sy_max = round(y1);
+    float deltay = y1 - y0;
+    float deltax = x1 - x0;
+    for (int i = sx_min;i <= sx_max;++i) {
+        for (int j = sy_min;j <= sy_max;++j) {
+            u = (i - x0) / deltax;
+            v = (j - y0 )/ deltay;
+            fill_sample(i, j, sampler->sample_bilinear(tex, u, v));
+        }
+    }
+
 
 }
 

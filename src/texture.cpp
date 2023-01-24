@@ -83,9 +83,20 @@ Color Sampler2DImp::sample_nearest(Texture& tex,
                                    int level) {
 
   // Task 6: Implement nearest neighbour interpolation
-  
+    int tu = round(u * float(tex.width));
+    int tv = round(v * float(tex.height));
   // return magenta for invalid level
-  return Color(1,0,1,1);
+    if (0 > tu || tu > tex.width || 0 > tv || tv > tex.height)
+        return Color(1, 0, 1, 1);
+    //cout << "Samled";
+    size_t base = 4 * (tu * tex.width + tv);
+    //return Color(0.5, 0.5, 0.5, 1);
+    return Color(
+        tex.mipmap[0].texels[base] / 255.0f,
+        tex.mipmap[0].texels[base + 1] / 255.0f,
+        tex.mipmap[0].texels[base + 2] / 255.0f,
+        tex.mipmap[0].texels[base + 3] / 255.0f
+    );
 
 }
 
@@ -94,9 +105,27 @@ Color Sampler2DImp::sample_bilinear(Texture& tex,
                                     int level) {
   
   // Task 6: Implement bilinear filtering
+    MipLevel mipmap= tex.mipmap[level];
+    u *= float(mipmap.width);
+    v *= float(mipmap.height);
+    if (0 > u || u > tex.width || 0 > v || v > tex.height)
+        return Color(1, 0, 1, 1);
+    int fu = floor(u-0.5);
+    int fv = floor(v-0.5);
+    int cu = fu + 1;
+    int cv = fv + 1;
 
-  // return magenta for invalid level
-  return Color(1,0,1,1);
+    Color color1 = mipmap.valid(fu,fv)? mipmap.color(fu,fv):Color::Black;
+    Color color2 = mipmap.valid(fu, cv) ? mipmap.color(fu, cv) : Color::Black;
+    Color color3= mipmap.valid(cu, fv) ? mipmap.color(cu, fv) : Color::Black;
+    Color color4 = mipmap.valid(cu, cv) ? mipmap.color(cu, cv) : Color::Black;
+    float s = (u - (fu+0.5));
+    float t = (v - (fv+0.5));
+    Color linearColor1 = color1 * (1 - s) + color3 * s;
+    Color linearColor2 = color2 * (1 - s) + color4 * s;
+    Color bilinearColor = (1 - t) * linearColor1 + t * linearColor2;
+    return bilinearColor;
+    //return Color(0.5, 0.5, 0.5, 1);
 
 }
 

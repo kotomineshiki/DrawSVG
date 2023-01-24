@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "CMU462.h"
-
+#include"color.h"
 namespace CMU462 {
 
 static const int kMaxMipLevels = 14;
@@ -18,6 +18,18 @@ struct MipLevel {
   size_t width; 
   size_t height;
   std::vector<unsigned char> texels;
+  inline bool valid(int tu, int tv) const {
+      return 0 <= tu && tu < height && 0 <= tv && tv < width;
+  }
+  Color color(int tu, int tv) {
+      size_t base = 4 * (tu * width + tv);
+      return Color(
+          texels[base] / 255.0f,
+          texels[base + 1] / 255.0f,
+          texels[base + 2] / 255.0f,
+          texels[base + 3] / 255.0f
+      );
+  }
 };
 
 struct Texture {
