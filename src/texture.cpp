@@ -63,17 +63,24 @@ void Sampler2DImp::generate_mips(Texture& tex, int startLevel) {
     level.texels = vector<unsigned char>(4 * width * height);
 
   }
-
+  cout <<"GenerateMipmapSize:" << tex.mipmap.size()<<endl;
   // fill all 0 sub levels with interchanging colors (JUST AS A PLACEHOLDER)
   Color colors[3] = { Color(1,0,0,1), Color(0,1,0,1), Color(0,0,1,1) };
-  for(size_t i = 1; i < tex.mipmap.size(); ++i) {
+  for (size_t i = 1; i < tex.mipmap.size(); ++i) {
 
-    Color c = colors[i % 3];
-    MipLevel& mip = tex.mipmap[i];
-
-    for(size_t i = 0; i < 4 * mip.width * mip.height; i += 4) {
-      float_to_uint8( &mip.texels[i], &c.r );
-    }
+      //  Color c = colors[i % 3];
+      MipLevel& mip = tex.mipmap[i];
+      MipLevel& last_mip = tex.mipmap[i - 1];
+      for (int m = 0;m < mip.width;++m) {
+          for (int n = 0;n < mip.height;++n) {
+              int base = 4 * (n * mip.width + m);
+              Color c = (last_mip.color(2 * m, 2 * n) + last_mip.color(2 * m + 1, 2 * n) + last_mip.color(2 * m, 2 * n + 1) + last_mip.color(2 * m + 1, 2 * n + 1)) * 0.25;
+              mip.texels[base] = c.r * 255;
+              mip.texels[base + 1] = c.g * 255;
+              mip.texels[base + 2] = c.b * 255;
+              mip.texels[base + 3] = 1 * 255;
+          }
+      }
   }
 
 }
@@ -129,15 +136,23 @@ Color Sampler2DImp::sample_bilinear(Texture& tex,
 
 }
 
-Color Sampler2DImp::sample_trilinear(Texture& tex, 
-                                     float u, float v, 
-                                     float u_scale, float v_scale) {
+Color Sampler2DImp::sample_trilinear(Texture& tex,
+    float u, float v,
+    float u_scale, float v_scale) {
 
-  // Task 7: Implement trilinear filtering
+    // Task 7: Implement trilinear filtering
+    float level = -log2(u_scale);
 
-  // return magenta for invalid level
-  return Color(1,0,1,1);
-
+    // return magenta for invalid level
+    if (level <= 0)return sample_bilinear(tex, u, v, 0);
+    if (level >= tex.mipmap.size())return sample_bilinear(tex, u, v, tex.mipmap.size() - 1);
+    int current_level = floor(level);
+    int next_level = current_level + 1;
+    float r = level - current_level;
+    Color current_color = sample_bilinear(tex, u, v, current_level);
+    Color next_color = sample_bilinear(tex, u, v, next_level);
+    Color trilinear_color = current_color * (1 - r) + next_color * r;
+    return trilinear_color;
 }
 
 } // namespace CMU462

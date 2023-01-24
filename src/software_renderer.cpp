@@ -380,6 +380,7 @@ void SoftwareRendererImp::rasterize_image( float x0, float y0,
     float u_scale = (x1 - x0) / tex.width;
     float v_scale = (y1 - y0) / tex.height;
     cout << x0 << " " << y0 <<" " << x1 << " " << y1 << endl;
+    cout << "CurrentLevelis" << u_scale << endl;
     int sx_min = round(x0);
     int sy_min = round(y0);
     int sx_max = round(x1);
@@ -390,7 +391,7 @@ void SoftwareRendererImp::rasterize_image( float x0, float y0,
         for (int j = sy_min;j <= sy_max;++j) {
             u = (i - x0) / deltax;
             v = (j - y0 )/ deltay;
-            fill_sample(i, j, sampler->sample_bilinear(tex, u, v));
+            fill_sample(i, j, sampler->sample_trilinear(tex, u, v,u_scale,v_scale));
         }
     }
 
