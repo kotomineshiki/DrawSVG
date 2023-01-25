@@ -426,10 +426,23 @@ void SoftwareRendererImp::fill_sample(int sx, int sy, const Color& color) {
     if (sy < 0 || sy >= sample_rate * target_h) return;
 
     // fill sample - NOT doing alpha blending!
-    (sample_buffer)[4 * (sx + sy * sample_rate * target_w)] = (uint8_t)(color.r * 255);
-    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 1] = (uint8_t)(color.g * 255);
-    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 2] = (uint8_t)(color.b * 255);
-    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 3] = (uint8_t)(color.a * 255);
+    float cr = (float)(sample_buffer)[4 * (sx + sy * sample_rate * target_w)]/255.f;
+    float cg=(sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 1]/ 255.f;
+    float cb=(sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 2]/ 255.f;
+    float ca=(sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 3]/ 255.f;
+    //if (ca == 1)return;
+    Color currentColor(cr, cg, cb, ca);
+    Color premul_color(color.r * color.a, color.g * color.a,color.b*color.a,color.a);//premultiplied;
+   // Color hovered(premul_color+currentColor*(1-premul_color.a));//Hover
+    float nr = premul_color.r + currentColor.r * (1 - premul_color.a);
+    float ng = premul_color.g + currentColor.g * (1 - premul_color.a);
+    float nb = premul_color.b + currentColor.b * (1 - premul_color.a);
+    float na = 1 - (1 - premul_color.a) * (1 - currentColor.a);
+    Color hovered(nr,ng,nb,na);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w)] = (uint8_t)(hovered.r * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 1] = (uint8_t)(hovered.g * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 2] = (uint8_t)(hovered.b * 255);
+    (sample_buffer)[4 * (sx + sy * sample_rate * target_w) + 3] = (uint8_t)(hovered.a * 255);
 }
 void SoftwareRendererImp::fill_pixel(int x, int y, const Color& color) {
     render_target[4 * (x + y * target_w) + 0] = (uint8_t)(color.r * 255);
