@@ -393,7 +393,7 @@ void SoftwareRendererImp::rasterize_image( float x0, float y0,
             v = (j - y0 )/ deltay;
         //    fill_sample(i, j, sampler->sample_trilinear(tex, u, v,u_scale,v_scale));
             //fill_sample(i, j, sampler->sample_nearest(tex, v,u));
-            fill_sample(i, j, sampler->sample_bilinear(tex, v, u));
+            fill_sample(i, j, sampler->sample_bilinear(tex, v, u));//????what happened to the order of UV
         }
     }
 
